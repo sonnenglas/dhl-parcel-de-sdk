@@ -1,0 +1,58 @@
+{
+  "name": "sonnenglas/dhl-parcel-de-api",
+  "description": "Unofficial PHP SDK for DHL Parcel DE (Post & Parcel Germany) Rest API",
+  "keywords": ["mydhl", "dhl", "dhlparcel", "parcel", "api", "rest", "api", "client", "php"],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Przemek Peron",
+      "email": "przemek@sonnenglas.net"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=8.0",
+    "ext-json": "*",
+    "guzzlehttp/guzzle": "~7.1",
+    "ramsey/uuid": "^4.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Sonnenglas\\MyDHL\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5",
+    "friendsofphp/php-cs-fixer": "^3.13.2",
+    "phpstan/phpstan": "^1.9.11",
+    "phpstan/extension-installer": "^1.2",
+    "phpstan/phpstan-strict-rules": "^1.4.5",
+    "phpstan/phpstan-phpunit": "^1.3.3",
+    "phpstan/phpstan-deprecation-rules": "^1.1.1"
+  },
+  "scripts": {
+    "lint": [
+      "./vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --config=.php-cs-fixer.dist.php --using-cache=no --dry-run --diff"
+    ],
+    "lint:fix": [
+      "./vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --config=.php-cs-fixer.dist.php --using-cache=no  --diff"
+    ],
+    "phpstan": [
+      "php ./vendor/bin/phpstan"
+    ],
+    "test": [
+      "sh scripts/tests.sh"
+    ]
+  },
+  "config": {
+    "allow-plugins": {
+      "phpstan/extension-installer": true
+    }
+  }
+}
