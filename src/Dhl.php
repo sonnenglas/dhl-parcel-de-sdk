@@ -2,20 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Sonnenglas\MyDHL;
+namespace Sonnenglas\DhlParcelDe;
 
-use Sonnenglas\DhlParcelDe\Services\ShipmentService;
+use Sonnenglas\DhlParcelDe\ShipmentService;
 
-class MyDHL
+class Dhl
 {
     protected Client $client;
 
     public function __construct(
         string $username,
         string $password,
-        bool $testMode = false
+        string $apiKey,
+        bool $productionMode = false
     ) {
-        $this->client = new Client($username, $password, $testMode);
+        $this->client = new Client($username, $password, $apiKey, $productionMode);
     }
 
     public function getShipmentService(): ShipmentService

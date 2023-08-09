@@ -12,92 +12,47 @@ class Address
      * @throws InvalidAddressException
      */
     public function __construct(
-        protected string $name,
-        protected string $addressStreet,
-        protected string $postalCode,
-        protected string $city,
-        protected string $country,
-        protected string $state = '',
-        protected string $email = '',
-        protected string $phone = '',
-        protected string $additionalInfo = '',
-    
+        public readonly string $name,
+        public readonly string $addressStreet,
+        public readonly string $postalCode,
+        public readonly string $city,
+        public readonly string $country,
+        public readonly string $state = '',
+        public readonly string $email = '',
+        public readonly string $phone = '',
+        public readonly string $additionalInfo = '',
     ) {
-        $this->country = strtoupper($this->country);
-
         $this->validateData();
     }
 
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getAddressStreet(): string
-    {
-        return $this->addressStreet;
-    }
-
-    public function getAddressLine3(): string
-    {
-        return $this->addressLine3;
-    }
-
-    public function getCountry(): string
-    {
-        return $this->country;
-    }
-
-    public function getPostalCode(): string
-    {
-        return $this->postalCode;
-    }
-
-    public function getCity(): string
-    {
-        return $this->city;
-    }
-
-    public function getAsArray(): array
-    {
-        $result = [
-            'name1' => $this->name,
-            'addressStreet' => $this->addressStreet,
-            'postalCode' => $this->postalCode,
-            'city' => $this->city,
-            'country' => $this->country,
-        ];
-
-        if (strlen($this->email) !== 0) {
-            $result['email'] = $this->email;
-        }
-
-        if (strlen($this->phone) !== 0) {
-            $result['phone'] = $this->phone;
-        }
-
-        if (strlen($this->additionalInfo) !== 0) {
-            $result['additionalAddressInformation1'] = $this->additionalInfo;
-        }
-
-        return $result;
-    }
 
     /**
      * @throws InvalidAddressException
      */
-    protected function validateData(): void
+    private function validateData(): void
     {
         if (strlen($this->country) !== 3) {
             throw new InvalidAddressException("Country Code must be 3 characters long (according to ISO 3166-1 alpha-3 format). Entered: {$this->country}");
         }
 
+        if ($this->country !== strtoupper($this->country)) {
+            throw new InvalidAddressException("Country Code must be in upper-case. Entered: {$this->country}");
+        }
+
         if (strlen($this->addressStreet) === 0) {
-            throw new InvalidAddressException("Address Street must not be empty.");
+            throw new InvalidAddressException("Address street must not be empty.");
         }
 
         if (strlen($this->city) === 0) {
             throw new InvalidAddressException("City name must not be empty.");
+        }
+
+        if (strlen($this->postalCode) === 0) {
+            throw new InvalidAddressException("Postal code must not be empty.");
+        }
+
+        if (strlen($this->name) === 0) {
+            throw new InvalidAddressException("Name must not be empty.");
         }
     }
 }

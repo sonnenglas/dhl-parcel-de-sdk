@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Sonnenglas\MyDHL\Services;
+namespace Sonnenglas\DhlParcelDe;
 
-use DateTimeImmutable;
+use Exception;
+use Sonnenglas\DhlParcelDe\Exceptions\InvalidArgumentException;
+use Sonnenglas\DhlParcelDe\Exceptions\MissingArgumentException;
+use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
+use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
+use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
+use GuzzleHttp\Exception\ClientException;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
-use Sonnenglas\MyDHL\ResponseParsers\ShipmentResponseParser;
+use Sonnenglas\DhlParcelDe\ValueObjects\Package;
 
 class ShipmentService
 {
     /** @var Shipment[] */
     private array $shipments;
 
-    private Address $shipper;
-
-    private Address $recipient;
-
     private array $requiredArguments = [
         'shipments',
-        'shipper',
-        'recipient',
     ];
 
     private array $lastResponse;
@@ -32,12 +32,21 @@ class ShipmentService
     {
     }
 
-    public function createShipment(): Shipment
+    public function createShipment(): ?ShipmentResponse
     {
         $this->validateParams();
         $query = $this->prepareQuery();
-        $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query);
-        return (new ShipmentResponseParser($this->lastResponse))->parse();
+
+        try {
+            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query);
+            return (new ShipmentResponseParser($this->lastResponse))->parse();
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
+            var_dump($response->getReasonPhrase());
+            $this->lastResponse['client_error'] = (string) $response->getBody();
+        }
+
+        return null;
     }
 
     public function getLastRawResponse(): array
@@ -45,18 +54,10 @@ class ShipmentService
         return $this->lastResponse;
     }
 
-    public function addShipper(Address $shipper): self
-    {
-        $this->shipper = $shipper;
-
-        return $this;
-    }
-
-
     /**
      * @var Shipment[] $shipments
-     * @param array $shipments 
-     * @return ShipmentService 
+     * @param array $shipments
+     * @return ShipmentService
      */
     public function setShipments(array $shipments): self
     {
@@ -73,103 +74,77 @@ class ShipmentService
 
     public function prepareQuery(): array
     {
-        $query = [
-            'plannedShippingDateAndTime' => $this->plannedShippingDateAndTime->format('Y-m-d\TH:i:s \G\M\TP'),
-            'accounts' => $this->prepareAccountsQuery(),
-            'customerDetails' => [
-                'shipperDetails' => [
-                    'postalAddress' => $this->shipperAddress->getAsArray(),
-                    'contactInformation' => $this->shipperContact->getAsArray(),
-                ],
-                'receiverDetails' => [
-                    'postalAddress' => $this->receiverAddress->getAsArray(),
-                    'contactInformation' => $this->receiverContact->getAsArray(),
-                ],
-            ],
-            'content' => [
-                'packages' => $this->preparePackagesQuery(),
-                'unitOfMeasurement' => $this->unitOfMeasurement,
-                'isCustomsDeclarable' => $this->isCustomsDeclarable,
-                'incoterm' => (string) $this->incoterm,
-                'description' => $this->description,
-            ],
-            'getRateEstimates' => $this->getRateEstimates,
-            'productCode' => $this->productCode,
+        $query = [];
 
-        ];
+        $query['profile'] = 'STANDARD_GRUPPENPROFIL';
 
-        if (isset($this->shipperTypeCode)) {
-            $query['customerDetails']['shipperDetails']['typeCode'] = (string) $this->shipperTypeCode;
-        }
-
-        if (isset($this->receiverTypeCode)) {
-            $query['customerDetails']['receiverDetails']['typeCode'] = (string) $this->receiverTypeCode;
-        }
-
-        if (isset($this->localProductCode) && $this->localProductCode !== '') {
-            $query['localProductCode'] = $this->localProductCode;
-        }
-
-        if ($this->receiverContact->getEmail() !== '') {
-            $query['shipmentNotification'][] = [
-                'typeCode' => 'email',
-                'languageCountryCode' => $this->receiverAddress->getCountryCode(),
-                'receiverId' => $this->receiverContact->getEmail(),
-            ];
-        }
-
-        if ($this->isPickupRequested) {
-            $query['pickup'] = [
-                'isRequested' => $this->isPickupRequested,
-                'closeTime' => $this->pickupCloseTime,
-                'location' => $this->pickupLocation,
-            ];
-
-            $query['pickup']['pickupDetails'] = [
-                'postalAddress' => $this->pickupAddress->getAsArray(),
-                'contactInformation' => $this->pickupContact->getAsArray(),
-            ];
-        }
-
-        if (count($this->valueAddedServices)) {
-            $query['valueAddedServices'] = [];
-
-            foreach ($this->valueAddedServices as $valueAddedService) {
-                $query['valueAddedServices'][] = $valueAddedService->getAsArray();
-            }
-        }
+        $query['shipments'] = $this->prepareShipmentsQuery();
 
         return $query;
     }
 
-    private function prepareAccountsQuery(): array
+    private function prepareShipmentsQuery(): array
     {
-        $accounts = [];
+        $query = [];
 
-        /** @var Account $account */
-        foreach ($this->accounts as $account) {
-            $accounts[] = $account->getAsArray();
-        }
+        foreach ($this->shipments as $shipment) {
 
-        return $accounts;
-    }
 
-    private function preparePackagesQuery(): array
-    {
-        $packages = [];
-
-        foreach ($this->packages as $package) {
-            $packages[] = [
-                'weight' => $package->getWeight(),
-                'dimensions' => [
-                   'length' => $package->getLength(),
-                   'width' => $package->getWidth(),
-                   'height' => $package->getHeight(),
-                ],
+            
+            $query[] = [
+                'product' => $shipment->product->value,
+                'billingNumber' => $shipment->billingNumber,
+                'refNo' => $shipment->referenceNo,
+                'shipper' => $this->prepareAddressQuery($shipment->shipper),
+                'consignee' => $this->prepareAddressQuery($shipment->recipient),
+                'details' => 
             ];
         }
 
-        return $packages;
+        // echo json_encode($query, JSON_PRETTY_PRINT);
+
+        return $query;
+    }
+
+    private function preparePackageQuery(Package $package): array
+    {
+        return [
+            'dim' => [
+                'uom' => 'mm',
+                'height' => $package->height,
+                'length' => $package->length,
+                'width' => $package->width,
+            ],
+            'weight' => [
+                'uom' => 'g',
+                'value' => $package->weight,
+            ],
+        ];
+    }
+
+    private function prepareAddressQuery(Address $address): array
+    {
+        $query = [
+            'name1' => $address->name,
+            'addressStreet' => $address->addressStreet,
+            'postalCode' => $address->postalCode,
+            'city' => $address->city,
+            'country' => $address->country,
+        ];
+
+        if (strlen($address->email)) {
+            $query['email'] = $address->email;
+        }
+
+        if (strlen($address->phone)) {
+            $query['phone'] = $address->phone;
+        }
+
+        if (strlen($address->additionalInfo)) {
+            $query['additionalAddressInformation1'] = $address->additionalInfo;
+        }
+
+        return $query;
     }
 
     /**
@@ -178,22 +153,15 @@ class ShipmentService
      */
     private function validateParams(): void
     {
-        if (!isset($this->incoterm)) {
-            $this->incoterm = new Incoterm('');
-        }
-
         foreach ($this->requiredArguments as $param) {
+            // @phpstan-ignore-next-line
             if (!isset($this->{$param})) {
                 throw new MissingArgumentException("Missing argument: {$param}");
             }
         }
 
-        if ($this->receiverContact->getPhone() == '') {
-            throw new MissingArgumentException("Missing phone number for receiver");
-        }
-
-        if ($this->receiverContact->getPhone() == '') {
-            throw new MissingArgumentException("Missing phone number for shipper");
+        if (! count($this->shipments)) {
+            throw new MissingArgumentException("At least one shipment is required");
         }
     }
 }

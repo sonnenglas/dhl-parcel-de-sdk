@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sonnenglas\DhlParcelDe\Enums;
 
-
 enum ShipmentProduct: string
 {
     case DhlPacket = 'V01PAK';

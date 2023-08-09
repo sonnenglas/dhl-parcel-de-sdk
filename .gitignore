@@ -1,7 +1,7 @@
 .idea
 .php_cs.cache
 .vscode/
-history/
+.history/
 vendor/
 .php-cs-fixer.cache
-test2.php
+test.php
