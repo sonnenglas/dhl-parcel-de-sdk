@@ -22,31 +22,19 @@ class ShipmentResponseParser
 
         foreach ($this->response['items'] as $itemResponse) {
             $itemResponses[] = new ShipmentItemResponse(
-                shipmentNo: $itemResponse['shipmentNo'],
-                shipmentStatusTitle: $itemResponse['sstatus']['title'],
-                shipmentStatusCode: $itemResponse['sstatus']['status'],
-                labelUrl: $itemResponse['label']['url'],
-                labelFormat: $itemResponse['label']['format'],
+                shipmentNo: (string) $itemResponse['shipmentNo'],
+                shipmentStatusTitle: (string) $itemResponse['sstatus']['title'],
+                shipmentStatusCode: (int) $itemResponse['sstatus']['statusCode'],
+                label: base64_decode($itemResponse['label']['b64'], true),
+                labelFormat: (string) $itemResponse['label']['fileFormat'],
             );
         }
 
         return new ShipmentResponse(
-            statusTitle: $this->response['status']['title'],
-            statusCode: $this->response['status']['status'],
-            statusDetail: $this->response['status']['detail'],
+            statusTitle: (string) $this->response['status']['title'],
+            statusCode: (int) $this->response['status']['statusCode'],
+            statusDetail: (string) $this->response['status']['detail'],
             itemResponses: $itemResponses,
         );
-    }
-
-    public function getLabelPdf(array $response): string
-    {
-        $labelPdf = '';
-        foreach ($response['documents'] as $document) {
-            if ($document['typeCode'] === 'label' && $document['imageFormat'] === 'PDF') {
-                $labelPdf = base64_decode($document['content'], true);
-            }
-        }
-
-        return $labelPdf;
     }
 }

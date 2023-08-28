@@ -9,8 +9,8 @@ class ShipmentItemResponse
     public function __construct(
         public readonly string $shipmentNo,
         public readonly string $shipmentStatusTitle,
-        public readonly string $shipmentStatusCode,
-        public readonly string $labelUrl,
+        public readonly int $shipmentStatusCode,
+        public readonly string $label,
         public readonly string $labelFormat,
     ) {
 

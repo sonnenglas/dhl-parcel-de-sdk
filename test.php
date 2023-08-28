@@ -34,15 +34,16 @@ $shipper = new Address(
 
 $recipient = new Address(
     name: 'Przemyslaw Peron',
-    addressStreet: 'ul. Wroclawska 63    ',
-    postalCode: '65-218',
-    city: 'Zielona Gora',
-    country: 'PL',
+    addressStreet: 'Deulowitzer Str. 31 B',
+    postalCode: '03172',
+    city: 'Guben',
+    country: 'DE',
     state: '',
     email: 'przemek@redkorn.pl',
     phone: '792477888',
     additionalInfo: '',
 );
+
 
 $package = new Package(
     height: 200,
@@ -52,8 +53,8 @@ $package = new Package(
 );
 
 $shipment = new Shipment(
-    product: ShipmentProduct::DhlPacket,
-    billingNumber: '123456789012',
+    product: ShipmentProduct::DhlEuropaket,
+    billingNumber: '33333333330102',
     referenceNo: '123456789',
     shipper: $shipper,
     recipient: $recipient,
@@ -64,7 +65,9 @@ try {
     $shipment = $shipmentService->setShipments([$shipment])
     ->createShipment();
 } catch (Exception $e) {
-    echo $shipmentService->getLastRawResponse();
+    echo $shipmentService->getLastErrorResponse();
+    var_dump('END');
 }
 
-print_r((string) $shipment);
+echo "Result:";
+var_dump($shipment);

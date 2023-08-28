@@ -29,8 +29,8 @@ class Shipment
      */
     private function validateData(): void
     {
-        if (strlen($this->billingNumber) !== 12) {
-            throw new InvalidArgumentException("Billing number must be 12 characters long. Entered: {$this->billingNumber}.");
+        if (strlen($this->billingNumber) !== 14) {
+            throw new InvalidArgumentException("Billing number must be 14 characters long. Entered: {$this->billingNumber}.");
         }
 
         if (strlen($this->referenceNo) < 8) {

@@ -39,14 +39,22 @@ class ShipmentService
 
         try {
             $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query);
+            $this->lastResponse['client_error'] = '';
+
             return (new ShipmentResponseParser($this->lastResponse))->parse();
         } catch (ClientException $e) {
             $response = $e->getResponse();
-            var_dump($response->getReasonPhrase());
             $this->lastResponse['client_error'] = (string) $response->getBody();
+            
+            throw $e;
         }
 
         return null;
+    }
+
+    public function getLastErrorResponse(): string
+    {
+        return $this->lastResponse['client_error'] ?: '';
     }
 
     public function getLastRawResponse(): array
@@ -80,6 +88,8 @@ class ShipmentService
 
         $query['shipments'] = $this->prepareShipmentsQuery();
 
+        echo json_encode($query, JSON_PRETTY_PRINT);
+
         return $query;
     }
 
@@ -97,11 +107,6 @@ class ShipmentService
                 'details' => $this->preparePackageQuery($shipment->package),
             ];
         }
-
-         echo json_encode($query, JSON_PRETTY_PRINT);
-
-        // die();
-
 
         return $query;
     }
