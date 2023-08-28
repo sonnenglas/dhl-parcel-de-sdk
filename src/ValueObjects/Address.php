@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Sonnenglas\DhlParcelDe\ValueObjects;
 
+use League\ISO3166\Exception\DomainException;
+use League\ISO3166\Exception\OutOfBoundsException;
+use League\ISO3166\ISO3166;
 use Sonnenglas\DhlParcelDe\Exceptions\InvalidAddressException;
 
 class Address
 {
+    private string $isoCountry;
+
     /**
      * @throws InvalidAddressException
      */
@@ -16,23 +21,42 @@ class Address
         public readonly string $addressStreet,
         public readonly string $postalCode,
         public readonly string $city,
-        public readonly string $country,
+        private string $country,
         public readonly string $state = '',
         public readonly string $email = '',
         public readonly string $phone = '',
         public readonly string $additionalInfo = '',
     ) {
         $this->validateData();
+        $this->convertCountry();
     }
 
+    /**
+     * Convert country code to ISO3166 alpha 3
+     * 
+     * @return void 
+     * @throws DomainException 
+     * @throws OutOfBoundsException 
+     */
+    private function convertCountry(): void
+    {
+        $data = (new ISO3166)->alpha2($this->country);
+     
+        $this->isoCountry = $data['alpha3'];
+    }
+
+    public function getCountry(): string
+    {
+        return $this->isoCountry;
+    }
 
     /**
      * @throws InvalidAddressException
      */
     private function validateData(): void
     {
-        if (strlen($this->country) !== 3) {
-            throw new InvalidAddressException("Country Code must be 3 characters long (according to ISO 3166-1 alpha-3 format). Entered: {$this->country}");
+        if (strlen($this->country) !== 2) {
+            throw new InvalidAddressException("Country Code must be 2 characters long (according to ISO 3166-1 alpha-2 format). Entered: {$this->country}");
         }
 
         if ($this->country !== strtoupper($this->country)) {

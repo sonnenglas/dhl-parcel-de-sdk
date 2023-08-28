@@ -8,7 +8,6 @@ use Sonnenglas\DhlParcelDe\Dhl;
 use Sonnenglas\DhlParcelDe\Enums\ShipmentProduct;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
 use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
-use GuzzleHttp\Psr7\Message;
 use Sonnenglas\DhlParcelDe\ValueObjects\Package;
 
 $user = 'sandy_sandbox';
@@ -19,7 +18,6 @@ $productionMode = false;
 
 $dhl = new Dhl($user, $pass, $key, $productionMode);
 
-
 $shipmentService = $dhl->getShipmentService();
 
 $shipper = new Address(
@@ -27,7 +25,7 @@ $shipper = new Address(
     addressStreet: 'Ünnern Diek 62',
     postalCode: '25724',
     city: 'Neufeld',
-    country: 'DEU',
+    country: 'DE',
     state: '',
     email: 'info@sonnenglas.net',
     phone: '',
@@ -39,7 +37,7 @@ $recipient = new Address(
     addressStreet: 'ul. Wroclawska 63    ',
     postalCode: '65-218',
     city: 'Zielona Gora',
-    country: 'POL',
+    country: 'PL',
     state: '',
     email: 'przemek@redkorn.pl',
     phone: '792477888',

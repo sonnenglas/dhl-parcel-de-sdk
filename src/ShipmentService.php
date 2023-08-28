@@ -88,20 +88,20 @@ class ShipmentService
         $query = [];
 
         foreach ($this->shipments as $shipment) {
-
-
-            
             $query[] = [
                 'product' => $shipment->product->value,
                 'billingNumber' => $shipment->billingNumber,
                 'refNo' => $shipment->referenceNo,
                 'shipper' => $this->prepareAddressQuery($shipment->shipper),
                 'consignee' => $this->prepareAddressQuery($shipment->recipient),
-                'details' => 
+                'details' => $this->preparePackageQuery($shipment->package),
             ];
         }
 
-        // echo json_encode($query, JSON_PRETTY_PRINT);
+         echo json_encode($query, JSON_PRETTY_PRINT);
+
+        // die();
+
 
         return $query;
     }
@@ -128,8 +128,8 @@ class ShipmentService
             'name1' => $address->name,
             'addressStreet' => $address->addressStreet,
             'postalCode' => $address->postalCode,
-            'city' => $address->city,
-            'country' => $address->country,
+            'city' => $address->city, 
+            'country' => $address->getCountry(),
         ];
 
         if (strlen($address->email)) {

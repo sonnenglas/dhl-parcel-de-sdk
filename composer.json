@@ -14,7 +14,8 @@
   "require": {
     "php": ">=8.1",
     "ext-json": "*",
-    "guzzlehttp/guzzle": "~7.1"
+    "guzzlehttp/guzzle": "~7.1",
+    "league/iso3166": "^4.3"
   },
   "autoload": {
     "psr-4": {
