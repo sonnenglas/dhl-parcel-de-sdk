@@ -1,0 +1,7 @@
+.idea
+.php_cs.cache
+.vscode/
+.history/
+vendor/
+.php-cs-fixer.cache
+
