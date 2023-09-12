@@ -88,8 +88,6 @@ class ShipmentService
 
         $query['shipments'] = $this->prepareShipmentsQuery();
 
-        echo json_encode($query, JSON_PRETTY_PRINT);
-
         return $query;
     }
 
