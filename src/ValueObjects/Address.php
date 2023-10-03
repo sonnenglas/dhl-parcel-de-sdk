@@ -33,15 +33,15 @@ class Address
 
     /**
      * Convert country code to ISO3166 alpha 3
-     * 
-     * @return void 
-     * @throws DomainException 
-     * @throws OutOfBoundsException 
+     *
+     * @return void
+     * @throws DomainException
+     * @throws OutOfBoundsException
      */
     private function convertCountry(): void
     {
-        $data = (new ISO3166)->alpha2($this->country);
-     
+        $data = (new ISO3166())->alpha2($this->country);
+
         $this->isoCountry = $data['alpha3'];
     }
 

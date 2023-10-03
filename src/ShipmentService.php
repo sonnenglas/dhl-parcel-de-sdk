@@ -45,7 +45,7 @@ class ShipmentService
         } catch (ClientException $e) {
             $response = $e->getResponse();
             $this->lastResponse['client_error'] = (string) $response->getBody();
-            
+
             throw $e;
         }
 
@@ -103,6 +103,7 @@ class ShipmentService
                 'shipper' => $this->prepareAddressQuery($shipment->shipper),
                 'consignee' => $this->prepareAddressQuery($shipment->recipient),
                 'details' => $this->preparePackageQuery($shipment->package),
+                'services' => $this->prepareServicesQuery(),
             ];
         }
 
@@ -131,7 +132,7 @@ class ShipmentService
             'name1' => $address->name,
             'addressStreet' => $address->addressStreet,
             'postalCode' => $address->postalCode,
-            'city' => $address->city, 
+            'city' => $address->city,
             'country' => $address->getCountry(),
         ];
 
@@ -148,6 +149,14 @@ class ShipmentService
         }
 
         return $query;
+    }
+
+    private function prepareServicesQuery(): array
+    {
+        // This part is required when shipping internationally
+        return [
+            'endorsement' => 'RETURN',
+        ];
     }
 
     /**
