@@ -20,6 +20,8 @@ class Shipment
         public readonly Address $shipper,
         public readonly Address $recipient,
         public readonly Package $package,
+        // Textfield that appears on the shipment label. It cannot be used to search for the shipment.
+        public readonly ?string $costCenter = null,
     ) {
         $this->validateData();
     }
@@ -37,6 +39,8 @@ class Shipment
             throw new InvalidArgumentException("Reference number (referenceNo) must be at least 8 characters long. Entered: {$this->referenceNo}.");
         }
 
-
+        if (strlen($this->referenceNo) > 35) {
+            throw new InvalidArgumentException("Reference number (referenceNo) must be at most 35 characters long. Entered: {$this->referenceNo}.");
+        }
     }
 }

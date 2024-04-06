@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Sonnenglas\DhlParcelDe;
 
-use Exception;
+use GuzzleHttp\Exception\ClientException;
 use Sonnenglas\DhlParcelDe\Exceptions\InvalidArgumentException;
 use Sonnenglas\DhlParcelDe\Exceptions\MissingArgumentException;
 use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
 use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
-use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
-use GuzzleHttp\Exception\ClientException;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
 use Sonnenglas\DhlParcelDe\ValueObjects\Package;
+use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
 
 class ShipmentService
 {
@@ -26,7 +25,6 @@ class ShipmentService
     private array $lastResponse;
 
     private const CREATE_SHIPMENT_URL = 'orders';
-
 
     public function __construct(private Client $client)
     {
@@ -54,7 +52,7 @@ class ShipmentService
 
     public function getLastErrorResponse(): string
     {
-        return $this->lastResponse['client_error'] ?: '';
+        return isset($this->lastResponse['client_error']) ? (string) $this->lastResponse['client_error'] : '';
     }
 
     public function getLastRawResponse(): array
@@ -63,15 +61,13 @@ class ShipmentService
     }
 
     /**
-     * @var Shipment[] $shipments
-     * @param array $shipments
-     * @return ShipmentService
+     * @var Shipment[]
      */
     public function setShipments(array $shipments): self
     {
         foreach ($shipments as $shipment) {
-            if (!$shipment instanceof Shipment) {
-                throw new InvalidArgumentException("Array should contain values of type Shipment");
+            if (! $shipment instanceof Shipment) {
+                throw new InvalidArgumentException('Array should contain values of type Shipment');
             }
         }
 
@@ -96,7 +92,7 @@ class ShipmentService
         $query = [];
 
         foreach ($this->shipments as $shipment) {
-            $query[] = [
+            $data = [
                 'product' => $shipment->product->value,
                 'billingNumber' => $shipment->billingNumber,
                 'refNo' => $shipment->referenceNo,
@@ -105,6 +101,12 @@ class ShipmentService
                 'details' => $this->preparePackageQuery($shipment->package),
                 'services' => $this->prepareServicesQuery(),
             ];
+
+            if ($shipment->costCenter) {
+                $data['costCenter'] = $shipment->costCenter;
+            }
+
+            $query[] = $data;
         }
 
         return $query;
@@ -160,20 +162,19 @@ class ShipmentService
     }
 
     /**
-     * @return void
      * @throws MissingArgumentException
      */
     private function validateParams(): void
     {
         foreach ($this->requiredArguments as $param) {
             // @phpstan-ignore-next-line
-            if (!isset($this->{$param})) {
+            if (! isset($this->{$param})) {
                 throw new MissingArgumentException("Missing argument: {$param}");
             }
         }
 
         if (! count($this->shipments)) {
-            throw new MissingArgumentException("At least one shipment is required");
+            throw new MissingArgumentException('At least one shipment is required');
         }
     }
 }
