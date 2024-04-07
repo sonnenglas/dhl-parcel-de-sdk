@@ -26,6 +26,7 @@ class Address
         public readonly string $email = '',
         public readonly string $phone = '',
         public readonly string $additionalInfo = '',
+        public readonly string $company = '',
     ) {
         $this->validateData();
         $this->convertCountry();
@@ -34,7 +35,6 @@ class Address
     /**
      * Convert country code to ISO3166 alpha 3
      *
-     * @return void
      * @throws DomainException
      * @throws OutOfBoundsException
      */
@@ -64,19 +64,31 @@ class Address
         }
 
         if (strlen($this->addressStreet) === 0) {
-            throw new InvalidAddressException("Address street must not be empty.");
+            throw new InvalidAddressException('Address street must not be empty.');
         }
 
         if (strlen($this->city) === 0) {
-            throw new InvalidAddressException("City name must not be empty.");
+            throw new InvalidAddressException('City name must not be empty.');
         }
 
         if (strlen($this->postalCode) === 0) {
-            throw new InvalidAddressException("Postal code must not be empty.");
+            throw new InvalidAddressException('Postal code must not be empty.');
         }
 
         if (strlen($this->name) === 0) {
-            throw new InvalidAddressException("Name must not be empty.");
+            throw new InvalidAddressException('Name must not be empty.');
+        }
+
+        if (strlen($this->additionalInfo) > 60) {
+            throw new InvalidAddressException("Additional info must not be longer than 60 characters. Entered: {$this->additionalInfo}");
+        }
+
+        if (strlen($this->name) > 50) {
+            throw new InvalidAddressException("Name must not be longer than 50 characters. Entered: {$this->name}");
+        }
+
+        if (strlen($this->company) > 50) {
+            throw new InvalidAddressException("Company name must not be longer than 50 characters. Entered: {$this->company}");
         }
     }
 }

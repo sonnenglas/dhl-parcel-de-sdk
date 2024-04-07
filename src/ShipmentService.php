@@ -130,13 +130,20 @@ class ShipmentService
 
     private function prepareAddressQuery(Address $address): array
     {
+
         $query = [
-            'name1' => $address->name,
             'addressStreet' => $address->addressStreet,
             'postalCode' => $address->postalCode,
             'city' => $address->city,
             'country' => $address->getCountry(),
         ];
+
+        if (strlen($address->company)) {
+            $query['name1'] = $address->company;
+            $query['name2'] = $address->name;
+        } else {
+            $query['name1'] = $address->name;
+        }
 
         if (strlen($address->email)) {
             $query['email'] = $address->email;
