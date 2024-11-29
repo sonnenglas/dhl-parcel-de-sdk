@@ -27,7 +27,7 @@ class ShipmentService
 
     private const CREATE_SHIPMENT_URL = 'orders';
 
-    private ?LabelFormat $labelFormat;
+    private ?LabelFormat $labelFormat = null;
 
 
     public function __construct(private Client $client) {}
