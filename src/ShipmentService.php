@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Sonnenglas\DhlParcelDe;
 
-use GuzzleHttp\Exception\ClientException;
 use Sonnenglas\DhlParcelDe\Exceptions\InvalidArgumentException;
 use Sonnenglas\DhlParcelDe\Exceptions\MissingArgumentException;
 use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
 use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
-use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
 use GuzzleHttp\Exception\ClientException;
 use Sonnenglas\DhlParcelDe\Enums\LabelFormat;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
@@ -32,9 +30,7 @@ class ShipmentService
     private ?LabelFormat $labelFormat;
 
 
-    public function __construct(private Client $client)
-    {
-    }
+    public function __construct(private Client $client) {}
 
     public function createShipment(): ?ShipmentResponse
     {
