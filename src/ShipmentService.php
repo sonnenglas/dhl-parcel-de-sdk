@@ -37,14 +37,8 @@ class ShipmentService
         $this->validateParams();
         $query = $this->prepareQuery();
 
-        $headers = [];
-
-        if ($this->labelFormat) {
-            $headers['printFormat'] = $this->labelFormat->value;
-        }
-
         try {
-            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query, $headers);
+            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query);
             $this->lastResponse['client_error'] = '';
 
             return (new ShipmentResponseParser($this->lastResponse))->parse();
@@ -96,6 +90,10 @@ class ShipmentService
         $query = [];
 
         $query['profile'] = 'STANDARD_GRUPPENPROFIL';
+
+        if ($this->labelFormat) {
+            $query['printFormat'] = $this->labelFormat->value;
+        }
 
         $query['shipments'] = $this->prepareShipmentsQuery();
 
