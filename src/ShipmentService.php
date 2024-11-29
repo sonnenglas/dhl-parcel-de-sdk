@@ -9,6 +9,9 @@ use Sonnenglas\DhlParcelDe\Exceptions\InvalidArgumentException;
 use Sonnenglas\DhlParcelDe\Exceptions\MissingArgumentException;
 use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
 use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
+use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
+use GuzzleHttp\Exception\ClientException;
+use Sonnenglas\DhlParcelDe\Enums\LabelFormat;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
 use Sonnenglas\DhlParcelDe\ValueObjects\Package;
 use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
@@ -26,17 +29,24 @@ class ShipmentService
 
     private const CREATE_SHIPMENT_URL = 'orders';
 
-    public function __construct(private Client $client)
-    {
-    }
+    private ?LabelFormat $labelFormat;
+
+
+    public function __construct(private Client $client) {}
 
     public function createShipment(): ?ShipmentResponse
     {
         $this->validateParams();
         $query = $this->prepareQuery();
 
+        $headers = [];
+
+        if ($this->labelFormat) {
+            $headers['printFormat'] = $this->labelFormat->value;
+        }
+
         try {
-            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query);
+            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query, $headers);
             $this->lastResponse['client_error'] = '';
 
             return (new ShipmentResponseParser($this->lastResponse))->parse();
@@ -72,6 +82,13 @@ class ShipmentService
         }
 
         $this->shipments = $shipments;
+
+        return $this;
+    }
+
+    public function setLabelFormat(LabelFormat $labelFormat): self
+    {
+        $this->labelFormat = $labelFormat;
 
         return $this;
     }
