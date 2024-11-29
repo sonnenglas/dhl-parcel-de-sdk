@@ -32,7 +32,9 @@ class ShipmentService
     private ?LabelFormat $labelFormat;
 
 
-    public function __construct(private Client $client) {}
+    public function __construct(private Client $client)
+    {
+    }
 
     public function createShipment(): ?ShipmentResponse
     {
