@@ -11,6 +11,7 @@ use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
 use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
 use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
 use GuzzleHttp\Exception\ClientException;
+use Sonnenglas\DhlParcelDe\Enums\LabelFormat;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
 use Sonnenglas\DhlParcelDe\ValueObjects\Package;
 
@@ -78,6 +79,11 @@ class ShipmentService
         $this->shipments = $shipments;
 
         return $this;
+    }
+
+    public function setLabelFormat(LabelFormat $labelFormat): self
+    {
+        
     }
 
     public function prepareQuery(): array

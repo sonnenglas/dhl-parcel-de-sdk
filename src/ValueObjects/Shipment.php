@@ -36,7 +36,5 @@ class Shipment
         if (strlen($this->referenceNo) < 8) {
             throw new InvalidArgumentException("Reference number (referenceNo) must be at least 8 characters long. Entered: {$this->referenceNo}.");
         }
-
-
     }
 }
