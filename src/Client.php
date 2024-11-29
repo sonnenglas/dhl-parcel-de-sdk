@@ -50,28 +50,26 @@ class Client
     /**
      * @throws ClientException
      */
-    public function post(string $uri, array $query): array
+    public function post(string $uri, array $query, array $headers = []): array
     {
         $httpClient = new GuzzleClient();
 
-        $options = $this->getRequestOptions('POST', $query);
+        $options = $this->getRequestOptions('POST', $query, $headers);
 
         $response = $httpClient->request('POST', $uri, $options);
 
         return json_decode((string) $response->getBody(), true);
     }
 
-
-    protected function getRequestOptions(string $queryType, array $query): array
+    protected function getRequestOptions(string $queryType, array $query, array $headers = []): array
     {
+        $headers['dhl-api-key'] = $this->apiKey;
+        $headers['Content-Type'] = 'application/json';
+
         $requestOptions = [
             'base_uri' => $this->baseUri,
             'auth' => [$this->username, $this->password],
-            'headers' => [
-                'dhl-api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-
-            ],
+            'headers' => $headers,
         ];
 
         if ($queryType === "GET") {

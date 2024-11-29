@@ -28,18 +28,24 @@ class ShipmentService
 
     private const CREATE_SHIPMENT_URL = 'orders';
 
+    private ?LabelFormat $labelFormat;
 
-    public function __construct(private Client $client)
-    {
-    }
+
+    public function __construct(private Client $client) {}
 
     public function createShipment(): ?ShipmentResponse
     {
         $this->validateParams();
         $query = $this->prepareQuery();
 
+        $headers = [];
+
+        if ($this->labelFormat) {
+            $headers['printFormat'] = $this->labelFormat->value;
+        }
+
         try {
-            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query);
+            $this->lastResponse = $this->client->post(self::CREATE_SHIPMENT_URL, $query, $headers);
             $this->lastResponse['client_error'] = '';
 
             return (new ShipmentResponseParser($this->lastResponse))->parse();
@@ -83,7 +89,9 @@ class ShipmentService
 
     public function setLabelFormat(LabelFormat $labelFormat): self
     {
-        
+        $this->labelFormat = $labelFormat;
+
+        return $this;
     }
 
     public function prepareQuery(): array
