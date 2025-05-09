@@ -61,6 +61,20 @@ class Client
         return json_decode((string) $response->getBody(), true);
     }
 
+    /**
+     * @throws ClientException
+     */
+    public function delete(string $uri, array $query): array
+    {
+        $httpClient = new GuzzleClient();
+
+        $options = $this->getRequestOptions('DELETE', $query);
+
+        $response = $httpClient->request('DELETE', $uri, $options);
+
+        return json_decode((string) $response->getBody(), true);
+    }
+
     protected function getRequestOptions(string $queryType, array $query, array $headers = []): array
     {
         $headers['dhl-api-key'] = $this->apiKey;
@@ -72,7 +86,7 @@ class Client
             'headers' => $headers,
         ];
 
-        if ($queryType === "GET") {
+        if ($queryType === "GET" || $queryType === "DELETE") {
             $requestOptions['query'] = $query;
         } else {
             $requestOptions['json'] = $query;
