@@ -27,8 +27,9 @@ class ShipmentService
 
     private const CREATE_SHIPMENT_URL = 'orders';
 
-    private ?LabelFormat $labelFormat = null;
+    private string $profile = 'STANDARD_GRUPPENPROFIL';
 
+    private ?LabelFormat $labelFormat = null;
 
     public function __construct(private Client $client) {}
 
@@ -58,6 +59,56 @@ class ShipmentService
         return null;
     }
 
+    /**
+     * Delete a shipment by its shipment number.
+     * 
+     * @param string $shipmentNumber The shipment number to delete
+     * @return bool True if deletion was successful, false otherwise
+     * @throws InvalidArgumentException When shipment number is empty
+     */
+    public function deleteShipment(string $shipmentNumber): bool
+    {
+        if (empty($shipmentNumber)) {
+            throw new InvalidArgumentException("Shipment number must not be empty");
+        }
+
+        $query = [
+            'profile' => $this->profile,
+            'shipment' => $shipmentNumber,
+        ];
+
+        try {
+            $this->lastResponse = $this->client->delete(self::CREATE_SHIPMENT_URL, $query);
+            $this->lastResponse['client_error'] = '';
+
+            // Check for success in the response status (single shipment response)
+            if (isset($this->lastResponse['status'])) {
+                $statusCode = $this->lastResponse['status']['statusCode'] ?? $this->lastResponse['status']['status'] ?? null;
+                if ($statusCode === 200) {
+                    return true;
+                }
+            }
+
+            // Check items array for multi-shipment response (207)
+            if (isset($this->lastResponse['items']) && is_array($this->lastResponse['items'])) {
+                foreach ($this->lastResponse['items'] as $item) {
+                    // Find the item matching our shipment number
+                    if (isset($item['shipmentNo']) && $item['shipmentNo'] === $shipmentNumber && isset($item['sstatus'])) {
+                        $statusCode = $item['sstatus']['statusCode'] ?? $item['sstatus']['status'] ?? null;
+                        return $statusCode === 200;
+                    }
+                }
+            }
+
+            return false;
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
+            $this->lastResponse['client_error'] = (string) $response->getBody();
+
+            return false;
+        }
+    }
+
     public function getLastErrorResponse(): string
     {
         return isset($this->lastResponse['client_error']) ? (string) $this->lastResponse['client_error'] : '';
@@ -69,7 +120,22 @@ class ShipmentService
     }
 
     /**
-     * @var Shipment[]
+     * Set the profile to be used for DHL API requests.
+     * 
+     * @param string $profileName The profile name to use
+     * @return self
+     */
+    public function setProfile(string $profileName = 'STANDARD_GRUPPENPROFIL'): self
+    {
+        $this->profile = $profileName;
+
+        return $this;
+    }
+
+    /**
+     * @var Shipment[] $shipments
+     * @param array $shipments
+     * @return ShipmentService
      */
     public function setShipments(array $shipments): self
     {
@@ -95,7 +161,7 @@ class ShipmentService
     {
         $query = [];
 
-        $query['profile'] = 'STANDARD_GRUPPENPROFIL';
+        $query['profile'] = $this->profile;
 
         $query['shipments'] = $this->prepareShipmentsQuery();
 
