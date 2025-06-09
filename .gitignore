@@ -4,4 +4,6 @@
 .history/
 vendor/
 .php-cs-fixer.cache
+parcel-de-shipping-v2.yaml
+.phpunit.result.cache
 

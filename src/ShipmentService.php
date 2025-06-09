@@ -68,7 +68,7 @@ class ShipmentService
      */
     public function deleteShipment(string $shipmentNumber): bool
     {
-        if (empty($shipmentNumber)) {
+        if ($shipmentNumber === '') {
             throw new InvalidArgumentException("Shipment number must not be empty");
         }
 
@@ -211,34 +211,7 @@ class ShipmentService
 
     private function prepareAddressQuery(Address $address): array
     {
-
-        $query = [
-            'addressStreet' => $address->addressStreet,
-            'postalCode' => $address->postalCode,
-            'city' => $address->city,
-            'country' => $address->getCountry(),
-        ];
-
-        if (strlen($address->company)) {
-            $query['name1'] = $address->company;
-            $query['name2'] = $address->name;
-        } else {
-            $query['name1'] = $address->name;
-        }
-
-        if (strlen($address->email)) {
-            $query['email'] = $address->email;
-        }
-
-        if (strlen($address->phone)) {
-            $query['phone'] = $address->phone;
-        }
-
-        if (strlen($address->additionalInfo)) {
-            $query['additionalAddressInformation1'] = $address->additionalInfo;
-        }
-
-        return $query;
+        return $address->toDhlApiFormat();
     }
 
     private function prepareServicesQuery(): array
