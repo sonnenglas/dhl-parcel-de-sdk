@@ -101,10 +101,38 @@ class Address
         ];
 
         if (strlen($this->company)) {
-            $address['name1'] = $this->company;
-            $address['name2'] = $this->name;
+            $combinedName = $this->name . ', ' . $this->company;
+
+            // If combined name exceeds 50 chars, use fallback format
+            if (strlen($combinedName) > 50) {
+                $address['name1'] = $this->name;
+                $address['name2'] = $this->company;
+
+                // Use name3 for additionalInfo in fallback mode
+                if (strlen($this->additionalInfo)) {
+                    if (strlen($this->additionalInfo) <= 50) {
+                        $address['name3'] = $this->additionalInfo;
+                    } else {
+                        // If additionalInfo is too long for name3, truncate to 50 chars
+                        $address['name3'] = substr($this->additionalInfo, 0, 50);
+                    }
+                }
+            } else {
+                // Combine contact name and company in name1
+                $address['name1'] = $combinedName;
+
+                // Split additionalInfo between name2 and name3 (50 chars each)
+                if (strlen($this->additionalInfo)) {
+                    $this->splitAdditionalInfoToFields($address);
+                }
+            }
         } else {
             $address['name1'] = $this->name;
+
+            // Split additionalInfo between name2 and name3 (50 chars each)
+            if (strlen($this->additionalInfo)) {
+                $this->splitAdditionalInfoToFields($address);
+            }
         }
 
         if (strlen($this->state)) {
@@ -119,11 +147,24 @@ class Address
             $address['phone'] = $this->phone;
         }
 
-        if (strlen($this->additionalInfo)) {
-            $address['additionalAddressInformation1'] = $this->additionalInfo;
-        }
-
         return $address;
+    }
+
+    /**
+     * Split additionalInfo between name2 and name3 (50 chars each)
+     */
+    private function splitAdditionalInfoToFields(array &$address): void
+    {
+        $info = $this->additionalInfo;
+
+        if (strlen($info) <= 50) {
+            // Fits in one field
+            $address['name2'] = $info;
+        } else {
+            // Split into two parts of 50 chars each
+            $address['name2'] = substr($info, 0, 50);
+            $address['name3'] = substr($info, 50, 50);
+        }
     }
 
     /**
@@ -159,8 +200,8 @@ class Address
             throw new InvalidAddressException('Postal code is required.');
         }
 
-        if (strlen($this->additionalInfo) > 60) {
-            throw new InvalidAddressException("Additional info must not be longer than 60 characters. Entered: {$this->additionalInfo}");
+        if (strlen($this->additionalInfo) > 100) {
+            throw new InvalidAddressException("Additional info must not be longer than 100 characters. Entered: {$this->additionalInfo}");
         }
 
         if (strlen($this->name) > 50) {

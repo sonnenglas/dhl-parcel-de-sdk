@@ -286,7 +286,7 @@ class AddressTest extends TestCase
             'name1' => 'John Doe',
             'email' => 'john@example.com',
             'phone' => '+49123456789',
-            'additionalAddressInformation1' => '2nd floor'
+            'name2' => '2nd floor'
         ], $apiFormat);
     }
 
@@ -308,8 +308,7 @@ class AddressTest extends TestCase
             'postalCode' => '50667',
             'city' => 'Köln',
             'country' => 'DEU',
-            'name1' => 'ACME Corp',
-            'name2' => 'John Doe'
+            'name1' => 'John Doe, ACME Corp'
         ], $apiFormat);
     }
 
@@ -422,20 +421,7 @@ class AddressTest extends TestCase
         );
     }
 
-    public function testAdditionalInfoLengthValidation(): void
-    {
-        $this->expectException(InvalidAddressException::class);
-        $this->expectExceptionMessage('Additional info must not be longer than 60 characters.');
-
-        new Address(
-            name: 'Test User',
-            addressStreet: 'Test Street',
-            postalCode: '12345',
-            city: 'Berlin',
-            country: 'DE',
-            additionalInfo: str_repeat('A', 61) // Too long
-        );
-    }
+    // Note: additionalInfo length validation removed since it's now split into multiple fields
 
     public function testCompanyLengthValidation(): void
     {
@@ -450,5 +436,113 @@ class AddressTest extends TestCase
             country: 'DE',
             company: str_repeat('A', 51) // Too long
         );
+    }
+
+    public function testAdditionalInfoSplitIntoName2(): void
+    {
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            additionalInfo: 'c/o VAH Jager Verlagsauslieferung'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals('John Doe', $dhlFormat['name1']);
+        $this->assertEquals('c/o VAH Jager Verlagsauslieferung', $dhlFormat['name2']);
+    }
+
+    public function testAdditionalInfoSplitBetweenName2AndName3(): void
+    {
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            additionalInfo: '12345678901234567890123456789012345678901234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890123456789012'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals('John Doe', $dhlFormat['name1']);
+        $this->assertEquals('12345678901234567890123456789012345678901234567890', $dhlFormat['name2']);
+        $this->assertEquals('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890123456789012', $dhlFormat['name3']);
+    }
+
+    public function testAdditionalInfoWithCompany(): void
+    {
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            company: 'Test Company GmbH',
+            additionalInfo: 'Abteilung Einkauf'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals('John Doe, Test Company GmbH', $dhlFormat['name1']);
+        $this->assertEquals('Abteilung Einkauf', $dhlFormat['name2']);
+    }
+
+    public function testAdditionalInfoLengthValidation(): void
+    {
+        $this->expectException(InvalidAddressException::class);
+        $this->expectExceptionMessage('Additional info must not be longer than 100 characters.');
+
+        new Address(
+            name: 'Test User',
+            addressStreet: 'Test Street',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            additionalInfo: str_repeat('A', 101) // Too long
+        );
+    }
+
+    public function testLongNameWithCompanyFallback(): void
+    {
+        $address = new Address(
+            name: 'Christopher Alexander Montgomery',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            company: 'Long Company Name GmbH & Co KG',
+            additionalInfo: 'Delivery instructions here'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        // Combined would be: "Christopher Alexander Montgomery, Long Company Name GmbH & Co KG" (67 chars > 50)
+        // Should use fallback format: name1=name, name2=company, name3=additionalInfo
+        $this->assertEquals('Christopher Alexander Montgomery', $dhlFormat['name1']);
+        $this->assertEquals('Long Company Name GmbH & Co KG', $dhlFormat['name2']);
+        $this->assertEquals('Delivery instructions here', $dhlFormat['name3']);
+    }
+
+    public function testShortNameWithCompanyCombined(): void
+    {
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            company: 'ACME',
+            additionalInfo: 'Additional info here'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        // Should use combined format since "John Doe, ACME" is ≤ 50 chars
+        $this->assertEquals('John Doe, ACME', $dhlFormat['name1']);
+        $this->assertEquals('Additional info here', $dhlFormat['name2']);
     }
 }
