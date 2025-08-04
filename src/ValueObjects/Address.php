@@ -101,7 +101,7 @@ class Address
         ];
 
         if (strlen($this->company)) {
-            $combinedName = $this->name . ', ' . $this->company;
+            $combinedName = (strlen($this->name) > 0 ? $this->name . ', ' : '') . $this->company;
 
             // If combined name exceeds 50 chars, use fallback format
             if (strlen($combinedName) > 50) {
