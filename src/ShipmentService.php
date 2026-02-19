@@ -60,6 +60,46 @@ class ShipmentService
     }
 
     /**
+     * Validate a shipment without actually creating it (DHL dry run).
+     *
+     * @param  bool  $mustEncode  Whether to require encoding validation
+     * @return bool True if validation passed (status 200)
+     *
+     * @throws ClientException
+     */
+    public function validateShipment(bool $mustEncode = false): bool
+    {
+        $this->validateParams();
+        $query = $this->prepareQuery();
+
+        $url = self::CREATE_SHIPMENT_URL . '?validate=true';
+
+        if ($mustEncode) {
+            $url .= '&mustEncode=true';
+        }
+
+        if ($this->labelFormat) {
+            $url .= '&printFormat=' . $this->labelFormat->value;
+        }
+
+        try {
+            $this->lastResponse = $this->client->post($url, $query);
+            $this->lastResponse['client_error'] = '';
+
+            $statusCode = $this->lastResponse['status']['statusCode']
+                ?? $this->lastResponse['status']['status']
+                ?? null;
+
+            return $statusCode === 200;
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
+            $this->lastResponse['client_error'] = (string) $response->getBody();
+
+            throw $e;
+        }
+    }
+
+    /**
      * Delete a shipment by its shipment number.
      * 
      * @param string $shipmentNumber The shipment number to delete

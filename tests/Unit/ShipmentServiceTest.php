@@ -11,7 +11,9 @@ use Sonnenglas\DhlParcelDe\Client;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
 use Sonnenglas\DhlParcelDe\ValueObjects\Package;
 use Sonnenglas\DhlParcelDe\ValueObjects\Shipment;
+use Sonnenglas\DhlParcelDe\Enums\LabelFormat;
 use Sonnenglas\DhlParcelDe\Enums\ShipmentProduct;
+use GuzzleHttp\Exception\ClientException as GuzzleClientException;
 use ReflectionClass;
 
 class ShipmentServiceTest extends TestCase
@@ -283,5 +285,125 @@ class ShipmentServiceTest extends TestCase
         $this->assertArrayHasKey('addressStreet', $shipmentData['shipper']);
         $this->assertArrayNotHasKey('lockerID', $shipmentData['shipper']);
         $this->assertArrayNotHasKey('postNumber', $shipmentData['shipper']);
+    }
+
+    public function testValidateShipmentSendsValidateQuery(): void
+    {
+        $shipment = $this->createTestShipment();
+        $this->shipmentService->setShipments([$shipment]);
+
+        $this->clientMock
+            ->expects($this->once())
+            ->method('post')
+            ->with(
+                $this->callback(function (string $url) {
+                    return str_contains($url, '?validate=true');
+                }),
+                $this->anything()
+            )
+            ->willReturn([
+                'status' => ['statusCode' => 200],
+            ]);
+
+        $result = $this->shipmentService->validateShipment();
+
+        $this->assertTrue($result);
+    }
+
+    public function testValidateShipmentWithMustEncode(): void
+    {
+        $shipment = $this->createTestShipment();
+        $this->shipmentService->setShipments([$shipment]);
+
+        $this->clientMock
+            ->expects($this->once())
+            ->method('post')
+            ->with(
+                $this->callback(function (string $url) {
+                    return str_contains($url, 'validate=true')
+                        && str_contains($url, 'mustEncode=true');
+                }),
+                $this->anything()
+            )
+            ->willReturn([
+                'status' => ['statusCode' => 200],
+            ]);
+
+        $result = $this->shipmentService->validateShipment(mustEncode: true);
+
+        $this->assertTrue($result);
+    }
+
+    public function testValidateShipmentWithLabelFormat(): void
+    {
+        $shipment = $this->createTestShipment();
+        $this->shipmentService
+            ->setShipments([$shipment])
+            ->setLabelFormat(LabelFormat::FORMAT_910_300_400);
+
+        $this->clientMock
+            ->expects($this->once())
+            ->method('post')
+            ->with(
+                $this->callback(function (string $url) {
+                    return str_contains($url, 'validate=true')
+                        && str_contains($url, 'printFormat=');
+                }),
+                $this->anything()
+            )
+            ->willReturn([
+                'status' => ['statusCode' => 200],
+            ]);
+
+        $result = $this->shipmentService->validateShipment();
+
+        $this->assertTrue($result);
+    }
+
+    public function testValidateShipmentReturnsFalseOnNon200Status(): void
+    {
+        $shipment = $this->createTestShipment();
+        $this->shipmentService->setShipments([$shipment]);
+
+        $this->clientMock
+            ->expects($this->once())
+            ->method('post')
+            ->willReturn([
+                'status' => ['statusCode' => 400],
+            ]);
+
+        $result = $this->shipmentService->validateShipment();
+
+        $this->assertFalse($result);
+    }
+
+    protected function createTestShipment(): Shipment
+    {
+        $shipper = new Address(
+            name: 'Company Inc',
+            addressStreet: 'Business St 1',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE'
+        );
+
+        $recipient = new Address(
+            name: 'John Customer',
+            addressStreet: 'Customer Ave 42',
+            postalCode: '54321',
+            city: 'Hamburg',
+            country: 'DE',
+        );
+
+        $package = new Package(200, 300, 150, 1000);
+
+        return new Shipment(
+            product: ShipmentProduct::DhlPacket,
+            billingNumber: '33333333330102',
+            referenceNo: 'TEST123456789',
+            shipper: $shipper,
+            recipient: $recipient,
+            package: $package
+        );
     }
 }
