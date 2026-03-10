@@ -50,7 +50,7 @@ class ShipmentServiceTest extends TestCase
             'city' => 'Köln',
             'country' => 'DEU',
             'name1' => 'John Doe',
-            'email' => 'john@example.com'
+            'email' => 'john@example.com',
         ];
 
         $this->assertEquals($expected, $result);
@@ -80,7 +80,7 @@ class ShipmentServiceTest extends TestCase
             'postNumber' => '1234567890',
             'city' => 'Köln',
             'postalCode' => '50667',
-            'country' => 'DEU'
+            'country' => 'DEU',
         ];
 
         $this->assertEquals($expected, $result);
@@ -142,7 +142,7 @@ class ShipmentServiceTest extends TestCase
             'postNumber' => '1234567890',
             'city' => 'Köln',
             'postalCode' => '50667',
-            'country' => 'DEU'
+            'country' => 'DEU',
         ];
 
         $this->assertEquals($expectedConsignee, $shipmentData['consignee']);
@@ -153,7 +153,7 @@ class ShipmentServiceTest extends TestCase
             'postalCode' => '12345',
             'city' => 'Berlin',
             'country' => 'DEU',
-            'name1' => 'Company Inc'
+            'name1' => 'Company Inc',
         ];
 
         $this->assertEquals($expectedShipper, $shipmentData['shipper']);
@@ -214,7 +214,7 @@ class ShipmentServiceTest extends TestCase
             'city' => 'Hamburg',
             'country' => 'DEU',
             'name1' => 'John Customer',
-            'email' => 'john@customer.com'
+            'email' => 'john@customer.com',
         ];
 
         $this->assertEquals($expectedConsignee, $shipmentData['consignee']);
@@ -224,7 +224,7 @@ class ShipmentServiceTest extends TestCase
             'postalCode' => '12345',
             'city' => 'Berlin',
             'country' => 'DEU',
-            'name1' => 'Company Inc'
+            'name1' => 'Company Inc',
         ];
 
         $this->assertEquals($expectedShipper, $shipmentData['shipper']);

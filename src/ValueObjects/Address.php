@@ -100,21 +100,21 @@ class Address
             'country' => $this->getCountry(),
         ];
 
-        if (strlen($this->company)) {
-            $combinedName = (strlen($this->name) > 0 ? $this->name . ', ' : '') . $this->company;
+        if (mb_strlen($this->company)) {
+            $combinedName = (mb_strlen($this->name) > 0 ? $this->name . ', ' : '') . $this->company;
 
             // If combined name exceeds 50 chars, use fallback format
-            if (strlen($combinedName) > 50) {
+            if (mb_strlen($combinedName) > 50) {
                 $address['name1'] = $this->name;
                 $address['name2'] = $this->company;
 
                 // Use name3 for additionalInfo in fallback mode
-                if (strlen($this->additionalInfo)) {
-                    if (strlen($this->additionalInfo) <= 50) {
+                if (mb_strlen($this->additionalInfo)) {
+                    if (mb_strlen($this->additionalInfo) <= 50) {
                         $address['name3'] = $this->additionalInfo;
                     } else {
                         // If additionalInfo is too long for name3, truncate to 50 chars
-                        $address['name3'] = substr($this->additionalInfo, 0, 50);
+                        $address['name3'] = mb_substr($this->additionalInfo, 0, 50);
                     }
                 }
             } else {
@@ -122,7 +122,7 @@ class Address
                 $address['name1'] = $combinedName;
 
                 // Split additionalInfo between name2 and name3 (50 chars each)
-                if (strlen($this->additionalInfo)) {
+                if (mb_strlen($this->additionalInfo)) {
                     $this->splitAdditionalInfoToFields($address);
                 }
             }
@@ -130,20 +130,20 @@ class Address
             $address['name1'] = $this->name;
 
             // Split additionalInfo between name2 and name3 (50 chars each)
-            if (strlen($this->additionalInfo)) {
+            if (mb_strlen($this->additionalInfo)) {
                 $this->splitAdditionalInfoToFields($address);
             }
         }
 
-        if (strlen($this->state)) {
+        if (mb_strlen($this->state)) {
             $address['state'] = $this->state;
         }
 
-        if (strlen($this->email)) {
+        if (mb_strlen($this->email)) {
             $address['email'] = $this->email;
         }
 
-        if (strlen($this->phone)) {
+        if (mb_strlen($this->phone)) {
             $address['phone'] = $this->phone;
         }
 
@@ -157,13 +157,13 @@ class Address
     {
         $info = $this->additionalInfo;
 
-        if (strlen($info) <= 50) {
+        if (mb_strlen($info) <= 50) {
             // Fits in one field
             $address['name2'] = $info;
         } else {
             // Split into two parts of 50 chars each
-            $address['name2'] = substr($info, 0, 50);
-            $address['name3'] = substr($info, 50, 50);
+            $address['name2'] = mb_substr($info, 0, 50);
+            $address['name3'] = mb_substr($info, 50, 50);
         }
     }
 
@@ -184,31 +184,31 @@ class Address
         $this->validatePackstationData();
 
         // Skip address street validation for packstation addresses
-        if (!$this->isPackstation() && strlen($this->addressStreet) === 0) {
+        if (!$this->isPackstation() && mb_strlen($this->addressStreet) === 0) {
             throw new InvalidAddressException('Address Street is required for regular addresses.');
         }
 
-        if (strlen($this->name) === 0) {
+        if (mb_strlen($this->name) === 0) {
             throw new InvalidAddressException('Name is required.');
         }
 
-        if (strlen($this->city) === 0) {
+        if (mb_strlen($this->city) === 0) {
             throw new InvalidAddressException('City is required.');
         }
 
-        if (strlen($this->postalCode) === 0) {
+        if (mb_strlen($this->postalCode) === 0) {
             throw new InvalidAddressException('Postal code is required.');
         }
 
-        if (strlen($this->additionalInfo) > 100) {
+        if (mb_strlen($this->additionalInfo) > 100) {
             throw new InvalidAddressException("Additional info must not be longer than 100 characters. Entered: {$this->additionalInfo}");
         }
 
-        if (strlen($this->name) > 50) {
+        if (mb_strlen($this->name) > 50) {
             throw new InvalidAddressException("Name must not be longer than 50 characters. Entered: {$this->name}");
         }
 
-        if (strlen($this->company) > 50) {
+        if (mb_strlen($this->company) > 50) {
             throw new InvalidAddressException("Company name must not be longer than 50 characters. Entered: {$this->company}");
         }
     }

@@ -286,7 +286,7 @@ class AddressTest extends TestCase
             'name1' => 'John Doe',
             'email' => 'john@example.com',
             'phone' => '+49123456789',
-            'name2' => '2nd floor'
+            'name2' => '2nd floor',
         ], $apiFormat);
     }
 
@@ -308,7 +308,7 @@ class AddressTest extends TestCase
             'postalCode' => '50667',
             'city' => 'Köln',
             'country' => 'DEU',
-            'name1' => 'John Doe, ACME Corp'
+            'name1' => 'John Doe, ACME Corp',
         ], $apiFormat);
     }
 
@@ -332,7 +332,7 @@ class AddressTest extends TestCase
             'postNumber' => '1234567890',
             'city' => 'Köln',
             'postalCode' => '50667',
-            'country' => 'DEU'
+            'country' => 'DEU',
         ], $apiFormat);
     }
 
@@ -504,6 +504,58 @@ class AddressTest extends TestCase
             country: 'DE',
             additionalInfo: str_repeat('A', 101) // Too long
         );
+    }
+
+    public function testAdditionalInfoWithUmlautsInName2(): void
+    {
+        // 49 characters, 50 bytes (ä = 2 bytes in UTF-8)
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            additionalInfo: 'In Hauseingang rechts unter die Briefkästen bitte'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals('In Hauseingang rechts unter die Briefkästen bitte', $dhlFormat['name2']);
+        $this->assertArrayNotHasKey('name3', $dhlFormat);
+    }
+
+    public function testAdditionalInfoSplitWithUmlauts(): void
+    {
+        // 51 characters with umlauts — should split at char 50, not byte 50
+        $info = str_repeat('ä', 25) . str_repeat('ö', 26); // 51 chars, 102 bytes
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            additionalInfo: $info
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals(50, mb_strlen($dhlFormat['name2']));
+        $this->assertEquals(1, mb_strlen($dhlFormat['name3']));
+    }
+
+    public function testValidationAcceptsMultibyteWithinCharLimit(): void
+    {
+        // 50 characters with umlauts = 100 bytes, but still 50 chars
+        $name = str_repeat('ä', 50);
+        $address = new Address(
+            name: $name,
+            addressStreet: 'Hauptstrasse 123',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+        );
+
+        $this->assertEquals($name, $address->toDhlApiFormat()['name1']);
     }
 
     public function testLongNameWithCompanyFallback(): void

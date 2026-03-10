@@ -8,6 +8,7 @@ use Sonnenglas\DhlParcelDe\Exceptions\InvalidArgumentException;
 use Sonnenglas\DhlParcelDe\Exceptions\MissingArgumentException;
 use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
 use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
+use Sonnenglas\DhlParcelDe\Responses\ValidationMessage;
 use GuzzleHttp\Exception\ClientException;
 use Sonnenglas\DhlParcelDe\Enums\LabelFormat;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
@@ -31,7 +32,9 @@ class ShipmentService
 
     private ?LabelFormat $labelFormat = null;
 
-    public function __construct(private Client $client) {}
+    public function __construct(private Client $client)
+    {
+    }
 
     public function createShipment(): ?ShipmentResponse
     {
@@ -101,7 +104,7 @@ class ShipmentService
 
     /**
      * Delete a shipment by its shipment number.
-     * 
+     *
      * @param string $shipmentNumber The shipment number to delete
      * @return bool True if deletion was successful, false otherwise
      * @throws InvalidArgumentException When shipment number is empty
@@ -154,6 +157,48 @@ class ShipmentService
         return isset($this->lastResponse['client_error']) ? (string) $this->lastResponse['client_error'] : '';
     }
 
+    /**
+     * Get validation messages from the last API response.
+     * Works for both successful responses and error responses.
+     *
+     * @return ValidationMessage[]
+     */
+    public function getLastValidationMessages(): array
+    {
+        // Check successful response items
+        if (isset($this->lastResponse['items'][0]['validationMessages'])) {
+            return $this->parseValidationMessages($this->lastResponse['items'][0]['validationMessages']);
+        }
+
+        // Check error response body
+        $errorBody = $this->getLastErrorResponse();
+
+        if ($errorBody) {
+            $decoded = json_decode($errorBody, true);
+
+            if (isset($decoded['items'][0]['validationMessages'])) {
+                return $this->parseValidationMessages($decoded['items'][0]['validationMessages']);
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @return ValidationMessage[]
+     */
+    private function parseValidationMessages(array $messages): array
+    {
+        return array_map(
+            fn (array $vm) => new ValidationMessage(
+                property: $vm['property'] ?? '',
+                validationMessage: $vm['validationMessage'] ?? '',
+                validationState: $vm['validationState'] ?? 'Error',
+            ),
+            $messages
+        );
+    }
+
     public function getLastRawResponse(): array
     {
         return $this->lastResponse;
@@ -161,7 +206,7 @@ class ShipmentService
 
     /**
      * Set the profile to be used for DHL API requests.
-     * 
+     *
      * @param string $profileName The profile name to use
      * @return self
      */
