@@ -19,7 +19,7 @@ class ApiSchemaValidationTest extends TestCase
         // lockerID: maximum: 999, minimum: 100, type: integer
         // postNumber: pattern: ^[0-9]{6,10}$
         // name: maxLength: 50, minLength: 1
-        // city: maxLength: 40, minLength: 0 
+        // city: maxLength: 40, minLength: 0
         // postalCode: maxLength: 10, minLength: 3, pattern: ^[0-9A-Za-z]+([ -]?[0-9A-Za-z]+)*$
 
         $address = new Address(

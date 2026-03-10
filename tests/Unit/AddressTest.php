@@ -286,7 +286,7 @@ class AddressTest extends TestCase
             'name1' => 'John Doe',
             'email' => 'john@example.com',
             'phone' => '+49123456789',
-            'name2' => '2nd floor'
+            'name2' => '2nd floor',
         ], $apiFormat);
     }
 
@@ -308,7 +308,7 @@ class AddressTest extends TestCase
             'postalCode' => '50667',
             'city' => 'Köln',
             'country' => 'DEU',
-            'name1' => 'John Doe, ACME Corp'
+            'name1' => 'John Doe, ACME Corp',
         ], $apiFormat);
     }
 
@@ -332,7 +332,7 @@ class AddressTest extends TestCase
             'postNumber' => '1234567890',
             'city' => 'Köln',
             'postalCode' => '50667',
-            'country' => 'DEU'
+            'country' => 'DEU',
         ], $apiFormat);
     }
 
