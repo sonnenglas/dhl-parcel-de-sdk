@@ -22,9 +22,11 @@ class Client
         protected string $username,
         protected string $password,
         protected string $apiKey,
-        protected bool $productionMode
+        protected bool $productionMode,
+        ?string $baseUriOverride = null
     ) {
-        $this->baseUri = $this->productionMode ? self::URI_PRODUCTION : self::URI_SANDBOX;
+        $this->baseUri = $baseUriOverride
+            ?? ($this->productionMode ? static::URI_PRODUCTION : static::URI_SANDBOX);
     }
 
     public function getBaseUri(): string
