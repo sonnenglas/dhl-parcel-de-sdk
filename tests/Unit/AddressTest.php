@@ -312,6 +312,57 @@ class AddressTest extends TestCase
         ], $apiFormat);
     }
 
+    public function testRegularAddressWithSeparateHouseNumberApiFormat(): void
+    {
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Musterstraße',
+            postalCode: '50667',
+            city: 'Köln',
+            country: 'DE',
+            addressHouse: '123'
+        );
+
+        $apiFormat = $address->toDhlApiFormat();
+
+        $this->assertSame('Musterstraße', $apiFormat['addressStreet']);
+        $this->assertSame('123', $apiFormat['addressHouse']);
+    }
+
+    public function testRegularAddressOmitsAddressHouseWhenEmpty(): void
+    {
+        $address = new Address(
+            name: 'John Doe',
+            addressStreet: 'Musterstraße 123',
+            postalCode: '50667',
+            city: 'Köln',
+            country: 'DE'
+        );
+
+        $apiFormat = $address->toDhlApiFormat();
+
+        $this->assertArrayNotHasKey('addressHouse', $apiFormat);
+    }
+
+    public function testPackstationAddressIgnoresAddressHouse(): void
+    {
+        $address = new Address(
+            name: 'Max Mustermann',
+            addressStreet: '',
+            postalCode: '50667',
+            city: 'Köln',
+            country: 'DE',
+            packstationId: 171,
+            packstationCustomerNumber: '1234567890',
+            addressHouse: '999'
+        );
+
+        $apiFormat = $address->toDhlApiFormat();
+
+        $this->assertArrayNotHasKey('addressHouse', $apiFormat);
+        $this->assertSame(171, $apiFormat['lockerID']);
+    }
+
     public function testPackstationApiFormat(): void
     {
         $address = new Address(

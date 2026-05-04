@@ -15,6 +15,11 @@ class Address
 
     /**
      * @throws InvalidAddressException
+     *
+     * @param string $addressHouse Optional house number sent as a separate field. Required by the
+     *                             Parcel DE Returns API; for the Shipping API DHL also accepts
+     *                             the house number embedded in $addressStreet, but using a
+     *                             dedicated field is recommended.
      */
     public function __construct(
         public readonly string $name,
@@ -29,6 +34,7 @@ class Address
         public readonly string $company = '',
         public readonly ?int $packstationId = null,
         public readonly ?string $packstationCustomerNumber = null,
+        public readonly string $addressHouse = '',
     ) {
         $this->validateData();
         $this->convertCountry();
@@ -99,6 +105,10 @@ class Address
             'city' => $this->city,
             'country' => $this->getCountry(),
         ];
+
+        if (mb_strlen($this->addressHouse)) {
+            $address['addressHouse'] = $this->addressHouse;
+        }
 
         if (mb_strlen($this->company)) {
             $combinedName = (mb_strlen($this->name) > 0 ? $this->name . ', ' : '') . $this->company;
