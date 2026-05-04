@@ -380,6 +380,25 @@ The SDK supports the following DHL products:
 - `ShipmentProduct::DhlKleinpaket` - DHL Kleinpaket (V62KP)
 - `ShipmentProduct::WarenPostInternational` - Warenpost International (V66WPI)
 
+## House Number Field (`addressHouse`)
+
+Since v2.5.0 `Address` accepts an optional `addressHouse` argument that maps to DHL's dedicated house-number field on `ContactAddress`:
+
+```php
+$customer = new Address(
+    name: 'Max Mustermann',
+    addressStreet: 'Hauptstraße',  // street name only
+    addressHouse: '1',             // house number — separate field
+    postalCode: '10115',
+    city: 'Berlin',
+    country: 'DE'
+);
+```
+
+For the **Parcel DE Returns API** the separated form is **mandatory** — concatenating the number into `addressStreet` causes DHL to respond with `400 "Please add your data in the field 'Number'."`. The Shipping API is more lenient and accepts both forms, but using `addressHouse` is recommended.
+
+`addressHouse` is silently ignored for Packstation/Locker addresses.
+
 ## Error Handling
 
 The SDK provides several ways to handle errors:
