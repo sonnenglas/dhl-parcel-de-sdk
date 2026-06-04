@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.5.1 — Warenpost national → DHL Kleinpaket (V62KP)
+
+- `ShipmentProduct::Warenpost` now sends `V62KP` instead of the retired `V62WP`. DHL renamed "Warenpost national" to "DHL Kleinpaket" and switched off the automatic V62WP→V62KP conversion after 2026-05-31, so the API began rejecting `V62WP` with "The product entered is unknown."
+
 ## v2.5.0 — Separate `addressHouse` field on `Address`
 
 - `Address` now accepts an optional `addressHouse` constructor argument and emits it as a dedicated field in the DHL ContactAddress payload.
