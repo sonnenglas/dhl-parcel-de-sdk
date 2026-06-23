@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.5.3 — Security: patched HTTP-client dependencies
+
+- Bumped `guzzlehttp/guzzle` to `^7.12.1` and refreshed the lock to pull `guzzlehttp/psr7` `2.12.3`, closing the cookie-domain, HTTPS-proxy-downgrade and CRLF-injection advisories (CVE-2026-55767/55568/55766/49214/48998). Dev `phpunit` moved to `9.6.34` past the PHPT deserialization advisory (CVE-2026-24765). No API changes.
+
 ## v2.5.2 — Author metadata
 
 - Package author metadata, README credits, and LICENSE copyright now list
