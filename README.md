@@ -411,6 +411,10 @@ The SDK provides several ways to handle errors:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Credits
+
+Built and maintained by [Przemek Peron](mailto:przemek@sonnenglas.net).
+
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE) for more information. 
+The MIT License (MIT). Please see [License File](LICENSE) for more information.

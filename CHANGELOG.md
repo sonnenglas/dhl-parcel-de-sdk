@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.5.2 — Author metadata
+
+- Package author metadata, README credits, and LICENSE copyright now list
+  Przemek Peron (`przemek@sonnenglas.net`).
+
 ## v2.5.1 — Warenpost national → DHL Kleinpaket (V62KP)
 
 - `ShipmentProduct::Warenpost` now sends `V62KP` instead of the retired `V62WP`. DHL renamed "Warenpost national" to "DHL Kleinpaket" and switched off the automatic V62WP→V62KP conversion after 2026-05-31, so the API began rejecting `V62WP` with "The product entered is unknown."
