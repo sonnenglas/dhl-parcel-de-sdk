@@ -458,35 +458,85 @@ class AddressTest extends TestCase
         );
     }
 
-    public function testFieldLengthValidation(): void
+    public function testLongNameSplitsAcrossNameFields(): void
     {
-        $this->expectException(InvalidAddressException::class);
-        $this->expectExceptionMessage('Name must not be longer than 50 characters.');
-
-        new Address(
-            name: str_repeat('A', 51), // Too long
+        $address = new Address(
+            name: str_repeat('A', 51), // Overflows a single 50-char field
             addressStreet: 'Test Street',
             postalCode: '12345',
             city: 'Berlin',
             country: 'DE'
         );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals(str_repeat('A', 50), $dhlFormat['name1']);
+        $this->assertEquals('A', $dhlFormat['name2']);
+        $this->assertArrayNotHasKey('name3', $dhlFormat);
+    }
+
+    public function testOverlongNameWithoutCompanyIsSplitInsteadOfRejected(): void
+    {
+        // Regression: a 59-char recipient name (a B2B association + shop name that
+        // overflowed a single field) previously threw InvalidAddressException,
+        // causing DHL label generation to 500 and stranding the order in fulfillment.
+        $name = 'Freundeskreis Eine Welt e.V. / Weltladen Balingen mkmaucher';
+
+        $address = new Address(
+            name: $name,
+            addressStreet: 'Neue Str.',
+            postalCode: '72336',
+            city: 'Balingen',
+            country: 'DE',
+            addressHouse: '39'
+        );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals(mb_substr($name, 0, 50), $dhlFormat['name1']);
+        $this->assertEquals(mb_substr($name, 50), $dhlFormat['name2']);
+        $this->assertLessThanOrEqual(50, mb_strlen($dhlFormat['name1']));
+        $this->assertLessThanOrEqual(50, mb_strlen($dhlFormat['name2']));
+        $this->assertArrayNotHasKey('name3', $dhlFormat);
     }
 
     // Note: additionalInfo length validation removed since it's now split into multiple fields
 
-    public function testCompanyLengthValidation(): void
+    public function testLongCompanySplitsAcrossNameFields(): void
     {
-        $this->expectException(InvalidAddressException::class);
-        $this->expectExceptionMessage('Company name must not be longer than 50 characters.');
-
-        new Address(
+        $address = new Address(
             name: 'Test User',
             addressStreet: 'Test Street',
             postalCode: '12345',
             city: 'Berlin',
             country: 'DE',
-            company: str_repeat('A', 51) // Too long
+            company: str_repeat('A', 51) // Overflows a single 50-char field
         );
+
+        $dhlFormat = $address->toDhlApiFormat();
+
+        $this->assertEquals('Test User', $dhlFormat['name1']);
+        $this->assertEquals(str_repeat('A', 50), $dhlFormat['name2']);
+        $this->assertEquals('A', $dhlFormat['name3']);
+    }
+
+    public function testNameFieldsThatCannotFitAreRejected(): void
+    {
+        // name alone fills all three fields (101 chars → 50/50/1), leaving no
+        // room for the company, which is genuinely unfittable.
+        $address = new Address(
+            name: str_repeat('A', 101),
+            addressStreet: 'Test Street',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+            company: 'Some Company'
+        );
+
+        $this->expectException(InvalidAddressException::class);
+        $this->expectExceptionMessage('too long to fit');
+
+        $address->toDhlApiFormat();
     }
 
     public function testAdditionalInfoSplitIntoName2(): void

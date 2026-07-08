@@ -110,40 +110,7 @@ class Address
             $address['addressHouse'] = $this->addressHouse;
         }
 
-        if (mb_strlen($this->company)) {
-            $combinedName = (mb_strlen($this->name) > 0 ? $this->name . ', ' : '') . $this->company;
-
-            // If combined name exceeds 50 chars, use fallback format
-            if (mb_strlen($combinedName) > 50) {
-                $address['name1'] = $this->name;
-                $address['name2'] = $this->company;
-
-                // Use name3 for additionalInfo in fallback mode
-                if (mb_strlen($this->additionalInfo)) {
-                    if (mb_strlen($this->additionalInfo) <= 50) {
-                        $address['name3'] = $this->additionalInfo;
-                    } else {
-                        // If additionalInfo is too long for name3, truncate to 50 chars
-                        $address['name3'] = mb_substr($this->additionalInfo, 0, 50);
-                    }
-                }
-            } else {
-                // Combine contact name and company in name1
-                $address['name1'] = $combinedName;
-
-                // Split additionalInfo between name2 and name3 (50 chars each)
-                if (mb_strlen($this->additionalInfo)) {
-                    $this->splitAdditionalInfoToFields($address);
-                }
-            }
-        } else {
-            $address['name1'] = $this->name;
-
-            // Split additionalInfo between name2 and name3 (50 chars each)
-            if (mb_strlen($this->additionalInfo)) {
-                $this->splitAdditionalInfoToFields($address);
-            }
-        }
+        $this->assignNameFields($address);
 
         if (mb_strlen($this->state)) {
             $address['state'] = $this->state;
@@ -161,20 +128,102 @@ class Address
     }
 
     /**
-     * Split additionalInfo between name2 and name3 (50 chars each)
+     * Distribute the recipient name, company and additional info across DHL's
+     * three name fields (name1/name2/name3), each capped at 50 characters.
+     *
+     * DHL only accepts 50 characters per name line but provides three of them.
+     * Rather than rejecting an over-long name — which previously threw and left
+     * orders stranded in fulfillment when a label could not be generated — the
+     * parts are combined where they fit and any part that does not is split
+     * across the remaining lines. Only genuinely unfittable input (more than
+     * three 50-character lines) is rejected.
+     *
+     * @param  array<string, mixed>  $address
+     *
+     * @throws InvalidAddressException
      */
-    private function splitAdditionalInfoToFields(array &$address): void
+    private function assignNameFields(array &$address): void
     {
-        $info = $this->additionalInfo;
+        $chunks = $this->splitSegmentsIntoFields($this->buildNameSegments());
 
-        if (mb_strlen($info) <= 50) {
-            // Fits in one field
-            $address['name2'] = $info;
-        } else {
-            // Split into two parts of 50 chars each
-            $address['name2'] = mb_substr($info, 0, 50);
-            $address['name3'] = mb_substr($info, 50, 50);
+        if (count($chunks) > 3) {
+            throw new InvalidAddressException(
+                "Name, company and additional info are too long to fit DHL's three "
+                . '50-character name fields (150 characters total).'
+            );
         }
+
+        $address['name1'] = $chunks[0] ?? $this->name;
+
+        if (isset($chunks[1])) {
+            $address['name2'] = $chunks[1];
+        }
+
+        if (isset($chunks[2])) {
+            $address['name3'] = $chunks[2];
+        }
+    }
+
+    /**
+     * Build the ordered list of logical name lines from name, company and
+     * additionalInfo, combining name and company into a single line when they
+     * fit within one 50-character field.
+     *
+     * @return array<int, string>
+     */
+    private function buildNameSegments(): array
+    {
+        $segments = [];
+
+        if (mb_strlen($this->company)) {
+            $combinedName = (mb_strlen($this->name) > 0 ? $this->name . ', ' : '') . $this->company;
+
+            if (mb_strlen($combinedName) <= 50) {
+                $segments[] = $combinedName;
+            } else {
+                if (mb_strlen($this->name) > 0) {
+                    $segments[] = $this->name;
+                }
+
+                $segments[] = $this->company;
+            }
+        } elseif (mb_strlen($this->name) > 0) {
+            $segments[] = $this->name;
+        }
+
+        if (mb_strlen($this->additionalInfo)) {
+            $segments[] = $this->additionalInfo;
+        }
+
+        return $segments;
+    }
+
+    /**
+     * Flatten logical name lines into physical DHL fields, splitting any line
+     * longer than 50 characters across consecutive fields.
+     *
+     * @param  array<int, string>  $segments
+     * @return array<int, string>
+     */
+    private function splitSegmentsIntoFields(array $segments): array
+    {
+        $chunks = [];
+
+        foreach ($segments as $segment) {
+            $length = mb_strlen($segment);
+
+            if ($length <= 50) {
+                $chunks[] = $segment;
+
+                continue;
+            }
+
+            for ($offset = 0; $offset < $length; $offset += 50) {
+                $chunks[] = mb_substr($segment, $offset, 50);
+            }
+        }
+
+        return $chunks;
     }
 
     /**
@@ -212,14 +261,6 @@ class Address
 
         if (mb_strlen($this->additionalInfo) > 100) {
             throw new InvalidAddressException("Additional info must not be longer than 100 characters. Entered: {$this->additionalInfo}");
-        }
-
-        if (mb_strlen($this->name) > 50) {
-            throw new InvalidAddressException("Name must not be longer than 50 characters. Entered: {$this->name}");
-        }
-
-        if (mb_strlen($this->company) > 50) {
-            throw new InvalidAddressException("Company name must not be longer than 50 characters. Entered: {$this->company}");
         }
     }
 
