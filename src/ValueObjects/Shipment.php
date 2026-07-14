@@ -22,6 +22,10 @@ class Shipment
         public readonly Package $package,
         // Textfield that appears on the shipment label. It cannot be used to search for the shipment.
         public readonly ?string $costCenter = null,
+        // services.premium: premium vs economy delivery for international products
+        // (e.g. Warenpost International Premium with tracking). Null omits the flag,
+        // letting DHL pick the current default for the receiver country.
+        public readonly ?bool $premium = null,
     ) {
         $this->validateData();
     }

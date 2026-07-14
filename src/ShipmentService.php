@@ -265,7 +265,7 @@ class ShipmentService
                 'shipper' => $this->prepareAddressQuery($shipment->shipper),
                 'consignee' => $this->prepareAddressQuery($shipment->recipient),
                 'details' => $this->preparePackageQuery($shipment->package),
-                'services' => $this->prepareServicesQuery(),
+                'services' => $this->prepareServicesQuery($shipment),
             ];
 
             if ($shipment->costCenter) {
@@ -299,12 +299,18 @@ class ShipmentService
         return $address->toDhlApiFormat();
     }
 
-    private function prepareServicesQuery(): array
+    private function prepareServicesQuery(Shipment $shipment): array
     {
         // This part is required when shipping internationally
-        return [
+        $services = [
             'endorsement' => 'RETURN',
         ];
+
+        if ($shipment->premium !== null) {
+            $services['premium'] = $shipment->premium;
+        }
+
+        return $services;
     }
 
     /**

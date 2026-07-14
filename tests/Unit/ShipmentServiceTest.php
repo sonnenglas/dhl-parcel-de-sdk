@@ -230,6 +230,55 @@ class ShipmentServiceTest extends TestCase
         $this->assertEquals($expectedShipper, $shipmentData['shipper']);
     }
 
+    public function testPremiumFlagIsIncludedInServicesQuery(): void
+    {
+        $shipper = new Address(
+            name: 'Company Inc',
+            addressStreet: 'Business St 1',
+            postalCode: '12345',
+            city: 'Berlin',
+            country: 'DE',
+        );
+
+        $recipient = new Address(
+            name: 'John Customer',
+            addressStreet: 'Customer Ave 42',
+            postalCode: '8001',
+            city: 'Zürich',
+            country: 'CH',
+        );
+
+        $premiumShipment = new Shipment(
+            product: ShipmentProduct::WarenpostInternational,
+            billingNumber: '33333333336601',
+            referenceNo: 'TEST123456789',
+            shipper: $shipper,
+            recipient: $recipient,
+            package: new Package(80, 300, 200, 900),
+            premium: true,
+        );
+
+        $defaultShipment = new Shipment(
+            product: ShipmentProduct::DhlPacketInternational,
+            billingNumber: '33333333335301',
+            referenceNo: 'TEST987654321',
+            shipper: $shipper,
+            recipient: $recipient,
+            package: new Package(200, 300, 150, 4000),
+        );
+
+        $this->shipmentService->setShipments([$premiumShipment, $defaultShipment]);
+
+        $reflection = new ReflectionClass($this->shipmentService);
+        $method = $reflection->getMethod('prepareShipmentsQuery');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->shipmentService);
+
+        $this->assertSame(['endorsement' => 'RETURN', 'premium' => true], $result[0]['services']);
+        $this->assertSame(['endorsement' => 'RETURN'], $result[1]['services']);
+    }
+
     public function testPrepareQueryStructure(): void
     {
         $shipper = new Address(
