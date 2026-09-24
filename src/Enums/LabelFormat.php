@@ -12,7 +12,7 @@ enum LabelFormat: string
     // Dimensions: 103 mm x 199 mm
     case FORMAT_910_300_600 = '910-300-600';
 
-    // Dimensions: 103 mm x 199 mm
+    // Dimensions: 105 mm x 208 mm (DHL parcel-de-shipping-v2 spec)
     case FORMAT_910_300_610 = '910-300-610';
 
     // Dimensions: 103 mm x 199 mm
@@ -30,10 +30,10 @@ enum LabelFormat: string
     // Dimensions: 103 mm x 150 mm
     case FORMAT_910_300_300_OZ = '910-300-300-oz';
 
-    // Dimensions: 100 mm x 199 mm
+    // Dimensions: 103 mm x 150 mm (DHL parcel-de-shipping-v2 spec; printed PDF measures 100 x 149 mm)
     case FORMAT_910_300_400 = '910-300-400';
 
-    // Dimensions: 100 mm x 199 mm
+    // Dimensions: 103 mm x 150 mm (like 910-300-400, without additional info)
     case FORMAT_910_300_410 = '910-300-410';
 
     // Dimensions: 100 mm x 70 mm
