@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      # composer.json allows php >=8.1, so resolve dependencies per PHP version instead of using the lock file.
+      - run: composer update --prefer-dist --no-interaction --no-progress
+
+      # The Integration suite needs DHL sandbox credentials and is not run here.
+      - run: vendor/bin/phpunit --testsuite Unit
+
+  quality:
+    name: PHPStan and code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - run: composer phpstan
+
+      - run: composer lint
