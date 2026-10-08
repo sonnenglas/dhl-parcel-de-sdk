@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.8.0 — Surface transport errors and add request timeouts
+
+- `ShipmentService` and `ReturnsService` now record the cause of every failed request in `getLastErrorResponse()`, not only 4xx responses. For timeouts, connection failures and 5xx responses without a body, the exception message is used, so callers no longer get an empty string.
+- All Guzzle exceptions are still rethrown unchanged; `deleteShipment()` keeps returning `false` for 4xx and now rethrows other transport errors after recording them.
+- The last response is reset at the start of each call, so `getLastErrorResponse()` can no longer return the body of an earlier failed request.
+- `Client` sets a default `timeout` of 30 s and `connect_timeout` of 10 s (previously unlimited). Both are optional trailing constructor arguments (`$timeout`, `$connectTimeout`); existing callers are unaffected.
+- Removed the stray import of another SDK's `ClientException` from `Client`.
+
 ## v2.6.0 — Fit long recipient names across name1/name2/name3 instead of failing
 
 - `Address` no longer throws `InvalidAddressException` when the recipient `name` or `company` exceeds 50 characters. DHL provides three 50-character name lines (`name1`/`name2`/`name3`); the name, company and additional info are now combined where they fit and any part that overflows a single line is split across the remaining lines.

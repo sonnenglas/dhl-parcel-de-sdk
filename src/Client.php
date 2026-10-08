@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Sonnenglas\DhlParcelDe;
 
 use GuzzleHttp\Client as GuzzleClient;
-use Sonnenglas\MyDHL\Exceptions\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 
 class Client
 {
@@ -23,7 +23,9 @@ class Client
         protected string $password,
         protected string $apiKey,
         protected bool $productionMode,
-        ?string $baseUriOverride = null
+        ?string $baseUriOverride = null,
+        protected float $timeout = 30.0,
+        protected float $connectTimeout = 10.0
     ) {
         $this->baseUri = $baseUriOverride
             ?? ($this->productionMode ? static::URI_PRODUCTION : static::URI_SANDBOX);
@@ -35,7 +37,7 @@ class Client
     }
 
     /**
-     * @throws ClientException
+     * @throws GuzzleException
      */
     public function get(string $uri, array $query): array
     {
@@ -50,7 +52,7 @@ class Client
 
 
     /**
-     * @throws ClientException
+     * @throws GuzzleException
      */
     public function post(string $uri, array $query, array $headers = []): array
     {
@@ -64,7 +66,7 @@ class Client
     }
 
     /**
-     * @throws ClientException
+     * @throws GuzzleException
      */
     public function delete(string $uri, array $query): array
     {
@@ -86,6 +88,8 @@ class Client
             'base_uri' => $this->baseUri,
             'auth' => [$this->username, $this->password],
             'headers' => $headers,
+            'timeout' => $this->timeout,
+            'connect_timeout' => $this->connectTimeout,
         ];
 
         if ($queryType === "GET" || $queryType === "DELETE") {

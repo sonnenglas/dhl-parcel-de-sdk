@@ -10,6 +10,8 @@ use Sonnenglas\DhlParcelDe\ResponseParsers\ShipmentResponseParser;
 use Sonnenglas\DhlParcelDe\Responses\ShipmentResponse;
 use Sonnenglas\DhlParcelDe\Responses\ValidationMessage;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Sonnenglas\DhlParcelDe\Enums\LabelFormat;
 use Sonnenglas\DhlParcelDe\ValueObjects\Address;
 use Sonnenglas\DhlParcelDe\ValueObjects\Package;
@@ -47,14 +49,15 @@ class ShipmentService
             $url .= '?printFormat=' . $this->labelFormat->value;
         }
 
+        $this->lastResponse = [];
+
         try {
             $this->lastResponse = $this->client->post($url, $query);
             $this->lastResponse['client_error'] = '';
 
             return (new ShipmentResponseParser($this->lastResponse))->parse();
-        } catch (ClientException $e) {
-            $response = $e->getResponse();
-            $this->lastResponse['client_error'] = (string) $response->getBody();
+        } catch (GuzzleException $e) {
+            $this->recordError($e);
 
             throw $e;
         }
@@ -85,6 +88,8 @@ class ShipmentService
             $url .= '&printFormat=' . $this->labelFormat->value;
         }
 
+        $this->lastResponse = [];
+
         try {
             $this->lastResponse = $this->client->post($url, $query);
             $this->lastResponse['client_error'] = '';
@@ -94,9 +99,8 @@ class ShipmentService
                 ?? null;
 
             return $statusCode === 200;
-        } catch (ClientException $e) {
-            $response = $e->getResponse();
-            $this->lastResponse['client_error'] = (string) $response->getBody();
+        } catch (GuzzleException $e) {
+            $this->recordError($e);
 
             throw $e;
         }
@@ -119,6 +123,8 @@ class ShipmentService
             'profile' => $this->profile,
             'shipment' => $shipmentNumber,
         ];
+
+        $this->lastResponse = [];
 
         try {
             $this->lastResponse = $this->client->delete(self::CREATE_SHIPMENT_URL, $query);
@@ -145,11 +151,28 @@ class ShipmentService
 
             return false;
         } catch (ClientException $e) {
-            $response = $e->getResponse();
-            $this->lastResponse['client_error'] = (string) $response->getBody();
+            $this->recordError($e);
 
             return false;
+        } catch (GuzzleException $e) {
+            $this->recordError($e);
+
+            throw $e;
         }
+    }
+
+    /**
+     * Keep the cause of a failed request available via getLastErrorResponse().
+     * Uses the response body when DHL sent one; otherwise (timeout, connection
+     * failure, 5xx with empty body) falls back to the exception message.
+     */
+    private function recordError(GuzzleException $e): void
+    {
+        $body = $e instanceof RequestException && $e->hasResponse()
+            ? (string) $e->getResponse()->getBody()
+            : '';
+
+        $this->lastResponse['client_error'] = trim($body) !== '' ? $body : $e->getMessage();
     }
 
     public function getLastErrorResponse(): string
