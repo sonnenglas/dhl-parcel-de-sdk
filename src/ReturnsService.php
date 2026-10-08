@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Sonnenglas\DhlParcelDe;
 
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Sonnenglas\DhlParcelDe\Enums\ReturnLabelType;
 use Sonnenglas\DhlParcelDe\Exceptions\MissingArgumentException;
 use Sonnenglas\DhlParcelDe\ResponseParsers\ReturnResponseParser;
@@ -55,14 +56,18 @@ class ReturnsService
         $payload = $this->prepareQuery($this->returnShipment);
         $url = self::CREATE_RETURN_URL.'?labelType='.$this->labelType->value;
 
+        $this->lastResponse = [];
+
         try {
             $this->lastResponse = $this->client->post($url, $payload);
             $this->lastResponse['client_error'] = '';
 
             return (new ReturnResponseParser($this->lastResponse))->parse();
-        } catch (ClientException $e) {
-            $response = $e->getResponse();
-            $this->lastResponse['client_error'] = (string) $response->getBody();
+        } catch (GuzzleException $e) {
+            $body = $e instanceof RequestException && $e->hasResponse()
+                ? (string) $e->getResponse()->getBody()
+                : '';
+            $this->lastResponse['client_error'] = trim($body) !== '' ? $body : $e->getMessage();
 
             throw $e;
         }
